@@ -1,21 +1,22 @@
 import pandas as pd
-import mariadb
+#import mariadb
 import sys
 import pymysql
+
 from sqlalchemy import create_engine
 
-
-try:
-    conn = mariadb.connect(
-        user="admin",
-        password="ips12341234",
-        host= "ips.csvcpbtn5bj6.ap-northeast-2.rds.amazonaws.com",
-        port=3306,
-        database="ips"
-    )
-except mariadb.Error as e:
-    print(f"Error connecting to MariaDB Platform: {e}")
-    sys.exit(1)
+#
+# try:
+#     conn = mariadb.connect(
+#         user="admin",
+#         password="ips12341234",
+#         host= "ips.csvcpbtn5bj6.ap-northeast-2.rds.amazonaws.com",
+#         port=3306,
+#         database="ips"
+#     )
+# except mariadb.Error as e:
+#     print(f"Error connecting to MariaDB Platform: {e}")
+#     sys.exit(1)
 
 
 def classify(user):
@@ -32,32 +33,39 @@ def classify(user):
     else:
         cate += 'O'
     return cate
+
+def str2df(new_user):
+    elements = new_user.split(",")
+    print(elements)
+    user=pd.DataFrame([elements], columns=['id','life_style', 'relation', 'rest_style', 'share', 'shower', 'clean', 'guest'])
+    return user
+
+#시작
+
 pymysql.install_as_MySQLdb()
 engine = create_engine("mysql://admin:ips12341234@ips.csvcpbtn5bj6.ap-northeast-2.rds.amazonaws.com:3306/ips")
-# cur = conn.cursor()
-# cur.execute('select * from characteristic')
-# res = cur.fetchall()
-# users = pd.DataFrame.from_records(res)
+
 users= pd.read_sql("SELECT * FROM characteristic;",engine,index_col='id')
+pref=pd.read_sql("SELECT * FROM likePer;",engine,index_col='char')
 print(users)
 # #users = pd.read_csv('users.csv', index_col='name')
-pref = pd.read_csv('preference.csv', index_col='Unnamed: 0')
 char = []
 # # print(classify(users.loc[users.index=='Jenny']))
 print(users.index)
 for name in users.index:
     char.append(classify(users.loc[users.index == name]))
-#
+print(sys.argv)
+print(sys.argv[1])
+new_user=sys.argv[1]
 users['char'] = char
-
+user=str2df(new_user)
 print(users)
-# users.to_csv("C:/Users/user/PycharmProjects/IPS/users.csv",sep=',',index=True)
-random_user = users.sample(frac=1 / 15, random_state=60)
-print(random_user)
 
-print(classify(random_user))
-prob = pref.loc[pref.index == classify(random_user)]
-prob = prob.sort_values(by=classify(random_user), axis=1, ascending=False)
+print(user)
+
+print(classify(user))
+prob = pref.loc[pref.index == classify(user)]
+prob = prob.sort_values(by=classify(user), axis=1, ascending=False)
 print(prob)
 order = prob.columns.values.tolist()
 print(order)
@@ -76,14 +84,14 @@ for i in db['id'].to_list():
 db['char']=char
 probb=[]
 for j in db['char'].to_list():
-    probb.append(prob.at[classify(random_user),j])
+    probb.append(prob.at[classify(user),j])
 db['prob']=probb
 
 db=db.drop('char', axis='columns')
 print(db)
-
+success="success"
 pymysql.install_as_MySQLdb()
 engine = create_engine("mysql://admin:ips12341234@ips.csvcpbtn5bj6.ap-northeast-2.rds.amazonaws.com:3306/ips")
-db.to_sql(name='matching', con=engine, if_exists='replace',index=False)
+db.to_sql(name='matching', con=engine, if_exists='replace', index=False)
 
-conn.close()
+#conn.close()

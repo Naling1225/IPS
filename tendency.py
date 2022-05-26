@@ -1,5 +1,7 @@
 import pandas as pd
 from pandas import DataFrame
+import pymysql
+from sqlalchemy import create_engine
 
 
 file= 'C:/Users/user/PycharmProjects/IPS/ipsdata.csv'
@@ -52,8 +54,12 @@ for m in rout_trend:
             row = row +1
     col=col+1
 
-
-preference=DataFrame(columns=['DFH','DFO','DSH','DSO','NFH','NFO','NSH','NSO'], index=['DFH','DFO','DSH','DSO','NFH','NFO','NSH','NSO'],data=arr2)
-print(preference)
+ind=pd.DataFrame(columns=['char'],data=['DFH','DFO','DSH','DSO','NFH','NFO','NSH','NSO'])
+preference=DataFrame(columns=['DFH','DFO','DSH','DSO','NFH','NFO','NSH','NSO'], data=arr2)
+db=pd.concat([ind, preference], axis = 1)
+print(db)
 #preference.to_csv("C:/Users/user/PycharmProjects/IPS/preference.csv",sep=',',index=True)
+pymysql.install_as_MySQLdb()
+engine = create_engine("mysql://admin:ips12341234@ips.csvcpbtn5bj6.ap-northeast-2.rds.amazonaws.com:3306/ips")
+db.to_sql(name='likePer', con=engine, if_exists='replace', index=False)
 
